@@ -95,5 +95,5 @@ function profitsSimulation() {
   // Print gain differentials array starting at row 2, column 2
   outputG.getRange(2,2,count,3).setValues(gainDifferentials);
   // Print long rates array starting at row 2, column 23
-  outputG.getRange(2,23,count).setValues(longRates);
+  outputG.getRange(2,5,count).setValues(longRates);
 }
