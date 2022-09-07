@@ -58,12 +58,12 @@ function profitsSimulation() {
   // Print tranch header to Output sheet
   outputG.getRange(1,2,1,3).setValues(tranches);
 
-  outputG.getRange(1,23).setValue('Long Rates');
+  outputG.getRange(1,5).setValue('Long Rates');
   // Count to determine cell ranges for when values are set on Output sheet
   count = 0;
   
   // For loop to run simulation i times
-  for (var i = 1; i <= 100; i++) {
+  for (var i = 1; i <= 300; i++) {
     refresh();
     // DO NOT change any values on the sheet or the data won't match !!!!!!
     
