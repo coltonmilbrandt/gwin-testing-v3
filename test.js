@@ -97,3 +97,26 @@ function profitsSimulation() {
   // Print long rates array starting at row 2, column 23
   outputG.getRange(2,5,count).setValues(longRates);
 }
+
+function simulateUse() {
+  // start here
+}
+
+// NEEDED FUNCTIONS
+  // deposit to tranche
+    // reallocate with new price
+    // update user tranche percent ownerships
+    // deposit new allocation
+    // reallocate with new allocations
+    // update user tranche percent ownerships
+  // withdraw from tranche
+    // reallocate with new price
+    // update user tranche percent ownerships
+    // withdraw allocation
+    // reallocate with new allocations
+    // update user tranche percent ownerships
+  // change price
+    // change price (by percentage or?)
+    // record price
+  // create output sheet to record transactions
+  // create arrays to store allocations, transactions, and tx details
