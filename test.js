@@ -101,14 +101,14 @@ function profitsSimulation() {
 
 function simulateUse() {
   addInteractionSheet();
+  // Set Starting Price
   ethPrice = 1000;
   sheet.getRange('startingPrice').setValue(ethPrice);
   console.log("1000 = " + ethPrice);
+  // changePrice()
   changePrice(0.10);
   console.log("1100 = " + ethPrice);
-
-  
-  // changePrice()
+  // initialAllocation()
   // reallocate()
   // recordState()
   // deposit() or withdraw()
@@ -118,10 +118,12 @@ function simulateUse() {
 
 function addInteractionSheet() {
   // Create new sheet if it doesn't exist already
-  if (!ss.interaction) {
-    var txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
-  } else {
+  if (SpreadsheetApp.getActive().getSheetByName('Interaction') == null) {
+    console.log('1');
     var txSheet = ss.insertSheet('Interaction');
+  } else {
+    console.log('2');
+    var txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
   }
   return txSheet;
 }
