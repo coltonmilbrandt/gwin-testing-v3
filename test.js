@@ -8,6 +8,7 @@ var profitPercentages = [];
 var gainDifferentials = [];
 var longRates = [];
 var profitRange = [];
+var ethPrice;
 
 function simulateGainDiff() {
   
@@ -99,7 +100,35 @@ function profitsSimulation() {
 }
 
 function simulateUse() {
-  // start here
+  addInteractionSheet();
+  ethPrice = 1000;
+  sheet.getRange('startingPrice').setValue(ethPrice);
+  console.log("1000 = " + ethPrice);
+  changePrice(0.10);
+  console.log("1100 = " + ethPrice);
+
+  
+  // changePrice()
+  // reallocate()
+  // recordState()
+  // deposit() or withdraw()
+  // reallocate()
+  // recordState()
+}
+
+function addInteractionSheet() {
+  // Create new sheet if it doesn't exist already
+  if (!ss.interaction) {
+    var txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
+  } else {
+    var txSheet = ss.insertSheet('Interaction');
+  }
+  return txSheet;
+}
+
+function changePrice(percentChange) {
+  ethPrice = ethPrice * (1 + percentChange);
+  sheet.getRange('endingPrice').setValue(ethPrice);
 }
 
 // NEEDED FUNCTIONS
@@ -107,13 +136,13 @@ function simulateUse() {
     // reallocate with new price
     // update user tranche percent ownerships
     // deposit new allocation
-    // reallocate with new allocations
+    // reallocate including new deposit
     // update user tranche percent ownerships
   // withdraw from tranche
     // reallocate with new price
     // update user tranche percent ownerships
     // withdraw allocation
-    // reallocate with new allocations
+    // reallocated including new withdraw
     // update user tranche percent ownerships
   // change price
     // change price (by percentage or?)
