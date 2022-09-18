@@ -8,7 +8,7 @@ var profitPercentages = [];
 var gainDifferentials = [];
 var longRates = [];
 var profitRange = [];
-var ethPrice;
+let ethPrice;
 
 function simulateGainDiff() {
   
@@ -99,22 +99,144 @@ function profitsSimulation() {
   outputG.getRange(2,5,count).setValues(longRates);
 }
 
+const foo = 0;
+const startingPrice = 0;
+const endingPrice = 0;
+const preCalcLongBal = 0;
+const preCalcDimBal = 0;
+const endLongBal = 0;
+const endDimBal = 0;
+const endLongUSD = 0;
+const endDimUSD = 0;
+const preCalcLongUSD = 0;
+const preCalcDimUSD = 0;
+
+function getCurrentValues() {
+  preCalcLongBal = sheet.getRange('longAllocation').getValue();
+  preCalcDimBal = sheet.getRange('diminishedAllocation').getValue();
+  endLongBal = sheet.getRange('longETHBal').getValue();
+  endDimBal = sheet.getRange('diminishedETHBalance').getValue();
+  endLongUSD = sheet.getRange('longEndUSD').getValue();
+  endDimUSD = sheet.getRange('diminishedEndUSD').getValue();
+  preCalcLongUSD = sheet.getRange('longStartUSD').getValue();
+  preCalcDimUSD = sheet.getRange('diminishedStartUSD').getValue();
+}
+
+const state = {
+  userBalances: {},
+  trancheBalances: {
+    longTranche: {
+      ethBal: 0,
+      usdBal: 0
+    },
+    diminishedTranche: {
+      ethBal: 0,
+      usdBal: 0
+    }
+  }
+}
+
+let userBalance = {
+  user: foo,
+  longTranche: {
+    ethBal: foo,
+    usdBal: foo,
+    percent: foo
+  },
+  diminishedTranche: {
+    ethBal: foo,
+    usdBal: foo,
+    percent: foo
+  }
+}
+
+let tx = {
+  transactionID: foo,
+  ethPrice: foo,
+  stateSnapOne: foo,
+  trasactionDetails: {
+
+  },
+  stateSnapTwo: foo,
+}
+
+const txHistory = {}
+
+// const longAllocation = sheet.getRange('longAllocation');
+
+function changeValueBy(range, value) {
+  let cellValue = sheet.getRange(range).getValue();
+  let newValue = cellValue + value;
+  sheet.getRange(range).setValue(newValue);
+}
+
+function setValue(range, value) {
+  sheet.getRange(range).setValue(value);
+}
+
+function initialAllocation(long, diminished) {
+  setValue('longAllocation', long);
+  setValue('diminishedAllocation', diminished);
+}
+
+// NEEDED FUNCTIONS
+  // deposit to tranche
+    // reallocate with new price
+    // update user tranche percent ownerships
+    // deposit new allocation
+    // reallocate including new deposit
+    // update user tranche percent ownerships
+  // withdraw from tranche
+    // reallocate with new price
+    // update user tranche percent ownerships
+    // withdraw allocation
+    // reallocated including new withdraw
+    // update user tranche percent ownerships
+  // change price
+    // change price (by percentage or?)
+    // record price
+  // create output sheet to record transactions
+  // create arrays to store allocations, transactions, and tx details
+
+function setState() {
+
+}
+
 function simulateUse() {
   addInteractionSheet();
   // Set Starting Price
   ethPrice = 1000;
-  sheet.getRange('startingPrice').setValue(ethPrice);
-  console.log("1000 = " + ethPrice);
-  // changePrice()
-  changePrice(0.10);
-  console.log("1100 = " + ethPrice);
+  setValue('startingPrice', ethPrice);
+  setValue('endingPrice', ethPrice);
   // initialAllocation()
+  initialAllocation(5,5);
+  // setState()
+  
+
+  // changePrice()
+  // changePrice(0.10);
   // reallocate()
   // recordState()
   // deposit() or withdraw()
   // reallocate()
   // recordState()
 }
+
+// user: 0 is Protocol, 1 is Alice, 2 is Bob, 3 is Chris, 4 is Dan
+// ethPercentChange: percent change in ETH/USD,  
+// type: '0' is deposit, '1' is withdraw
+// tranche: 'longAllocation' or 'diminishedAllocation'
+// amount: amount of ETH to transact
+function transact(user, ethPercentChange, type, tranche, amount) {
+  // do not reallocate if either tranch is 0
+  getCurrentValues();
+  if(preCalcLongBal > 0 && preCalcDimBal > 0) {
+    // reallocate
+    console.log('good to go');
+  }
+}
+
+
 
 function addInteractionSheet() {
   // Create new sheet if it doesn't exist already
@@ -133,18 +255,6 @@ function changePrice(percentChange) {
   sheet.getRange('endingPrice').setValue(ethPrice);
 }
 
-const tx = {
-  transactionID: foo,
-  ethPrice: foo,
-  stateSnapOne: foo,
-  trasactionDetails: {
-
-  },
-  stateSnapTwo: foo,
-}
-
-const txHistory = {}
-
 // TRANSACTION HISTORY OBJECT
   // transaction 1
   // transaction 2 ...
@@ -158,33 +268,6 @@ const txHistory = {}
     // Transaction amount ETH
     // Transaction amount USD
   // State Snapshot Two (after 2nd reallocation using State Snapshot One)
-
-const state = {
-  userBalances: {},
-  trancheBalances: {
-    longTranche: {
-      ethBal: foo,
-      usdBal: foo
-    },
-    diminishedTranche: {
-      ethBal: foo,
-      usdBal: foo
-    }
-  }
-}
-
-let userBalance = {
-  longTranche: {
-    ethBal: foo,
-    usdBal: foo,
-    percent: foo
-  },
-  diminishedTranche: {
-    ethBal: foo,
-    usdBal: foo,
-    percent: foo
-  }
-}
 
 // STATE OBJECT (Represents the current state of the protocol)
   // User Balances: {
@@ -207,21 +290,4 @@ let userBalance = {
       // ETH Balance
       // USD Balance
 
-// NEEDED FUNCTIONS
-  // deposit to tranche
-    // reallocate with new price
-    // update user tranche percent ownerships
-    // deposit new allocation
-    // reallocate including new deposit
-    // update user tranche percent ownerships
-  // withdraw from tranche
-    // reallocate with new price
-    // update user tranche percent ownerships
-    // withdraw allocation
-    // reallocated including new withdraw
-    // update user tranche percent ownerships
-  // change price
-    // change price (by percentage or?)
-    // record price
-  // create output sheet to record transactions
-  // create arrays to store allocations, transactions, and tx details
+
