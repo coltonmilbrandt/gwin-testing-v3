@@ -133,8 +133,23 @@ function changePrice(percentChange) {
   sheet.getRange('endingPrice').setValue(ethPrice);
 }
 
+const tx = {
+  transactionID: foo,
+  ethPrice: foo,
+  stateSnapOne: foo,
+  trasactionDetails: {
+
+  },
+  stateSnapTwo: foo,
+}
+
+const txHistory = {}
 
 // TRANSACTION HISTORY OBJECT
+  // transaction 1
+  // transaction 2 ...
+
+// TRANSACTION OBJECT
   // Transaction ID
   // ETH price
   // State Snapshot One (after reallocation using txHistory[-1].snapshotTwo)
@@ -144,16 +159,46 @@ function changePrice(percentChange) {
     // Transaction amount USD
   // State Snapshot Two (after 2nd reallocation using State Snapshot One)
 
+const state = {
+  userBalances: {},
+  trancheBalances: {
+    longTranche: {
+      ethBal: foo,
+      usdBal: foo
+    },
+    diminishedTranche: {
+      ethBal: foo,
+      usdBal: foo
+    }
+  }
+}
+
+let userBalance = {
+  longTranche: {
+    ethBal: foo,
+    usdBal: foo,
+    percent: foo
+  },
+  diminishedTranche: {
+    ethBal: foo,
+    usdBal: foo,
+    percent: foo
+  }
+}
+
 // STATE OBJECT (Represents the current state of the protocol)
-  // User Balances
-    // Long Tranche
-      // ETH Balance
-      // USD Balance
-      // Percent Ownership
-    // Diminished Tranche
-      // ETH Balance
-      // USD Balance
-      // Percent Ownership
+  // User Balances: {
+    // User: {
+      // Long Tranche
+        // ETH Balance
+        // USD Balance
+        // Percent Ownership
+      // Diminished Tranche
+        // ETH Balance
+        // USD Balance
+        // Percent Ownership
+    // }
+  // }
   // Tranche Balances
     // Long Tranche
       // ETH Balance
