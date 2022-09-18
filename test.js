@@ -99,68 +99,40 @@ function profitsSimulation() {
   outputG.getRange(2,5,count).setValues(longRates);
 }
 
-const foo = 0;
-const startingPrice = 0;
-const endingPrice = 0;
-const preCalcLongBal = 0;
-const preCalcDimBal = 0;
-const endLongBal = 0;
-const endDimBal = 0;
-const endLongUSD = 0;
-const endDimUSD = 0;
-const preCalcLongUSD = 0;
-const preCalcDimUSD = 0;
+let txID = 0;
+
+let foo = 0;
+let startingPrice = 0;
+let endingPrice = 0;
+let preCalcLongBal = 0;
+let preCalcDimBal = 0;
+let endLongBal = 0;
+let endDimBal = 0;
+let preCalcLongUSD = 0;
+let preCalcDimUSD = 0;
+let endLongUSD = 0;
+let endDimUSD = 0;
+let longPercentGainUSD = 0;
+let dimPercentGainUSD = 0;
+let longGainDiff;
+let dimGainDiff;
 
 function getCurrentValues() {
   preCalcLongBal = sheet.getRange('longAllocation').getValue();
   preCalcDimBal = sheet.getRange('diminishedAllocation').getValue();
   endLongBal = sheet.getRange('longETHBal').getValue();
   endDimBal = sheet.getRange('diminishedETHBalance').getValue();
-  endLongUSD = sheet.getRange('longEndUSD').getValue();
-  endDimUSD = sheet.getRange('diminishedEndUSD').getValue();
   preCalcLongUSD = sheet.getRange('longStartUSD').getValue();
   preCalcDimUSD = sheet.getRange('diminishedStartUSD').getValue();
+  endLongUSD = sheet.getRange('longEndUSD').getValue();
+  endDimUSD = sheet.getRange('diminishedEndUSD').getValue();
+  longPercentGainUSD = sheet.getRange('longUSDGain').getValue();
+  dimPercentGainUSD = sheet.getRange('diminishedGainUSD').getValue();
+  longGainDiff = sheet.getRange('longGainDiff').getValue();
+  dimGainDiff = sheet.getRange('diminishedGainDiff').getValue();
 }
 
-const state = {
-  userBalances: {},
-  trancheBalances: {
-    longTranche: {
-      ethBal: 0,
-      usdBal: 0
-    },
-    diminishedTranche: {
-      ethBal: 0,
-      usdBal: 0
-    }
-  }
-}
-
-let userBalance = {
-  user: foo,
-  longTranche: {
-    ethBal: foo,
-    usdBal: foo,
-    percent: foo
-  },
-  diminishedTranche: {
-    ethBal: foo,
-    usdBal: foo,
-    percent: foo
-  }
-}
-
-let tx = {
-  transactionID: foo,
-  ethPrice: foo,
-  stateSnapOne: foo,
-  trasactionDetails: {
-
-  },
-  stateSnapTwo: foo,
-}
-
-const txHistory = {}
+const txHistory = [];
 
 // const longAllocation = sheet.getRange('longAllocation');
 
@@ -198,6 +170,72 @@ function initialAllocation(long, diminished) {
   // create output sheet to record transactions
   // create arrays to store allocations, transactions, and tx details
 
+const state = {
+  userBalances: [],
+  trancheBalances: {
+    longTranche: {
+      ethBal: 0,
+      usdBal: 0
+    },
+    diminishedTranche: {
+      ethBal: 0,
+      usdBal: 0
+    }
+  }
+}
+
+function setInitialState() {
+  getCurrentValues();
+  let protocolUserBal = {
+    user: 0,
+    longTranche: {
+      ethBal: preCalcLongBal,
+      usdBal: preCalcLongUSD,
+      percent: 1,
+    },
+    diminishedTranche: {
+      ethBal: preCalcDimBal,
+      usdBal: preCalcDimUSD,
+      percent: 1,
+    }
+  }
+  state.userBalances.push(protocolUserBal);
+
+  state.trancheBalances.longTranche.ethBal = endLongBal;
+  state.trancheBalances.longTranche.usdBal = endLongUSD;
+  state.trancheBalances.diminishedTranche.ethBal = endDimBal;
+  state.trancheBalances.diminishedTranche.usdBal = endDimUSD;
+
+  let initTx = {
+    transactionID: 0,
+    ethPrice: ethPrice,
+    stateSnapOne: JSON.parse(JSON.stringify(state)),
+    transactionDetails: {},
+    stateSnapTwo: JSON.parse(JSON.stringify(state)),
+  };
+
+  txHistory.push(initTx);
+  console.log(txHistory);
+  console.log(txHistory.find(x => x.transactionID === 0).stateSnapTwo);
+}
+
+// TRANSACTION OBJECT
+  // Transaction ID
+  // ETH price
+  // State Snapshot One (after reallocation using txHistory[-1].snapshotTwo)
+  // Transaction Details
+    // Affected Tranche
+    // Transaction amount ETH
+    // Transaction amount USD
+  // State Snapshot Two (after 2nd reallocation using State Snapshot One)
+
+
+
+function recordState() {
+  getCurrentValues();
+
+}
+
 function setState() {
 
 }
@@ -210,13 +248,14 @@ function simulateUse() {
   setValue('endingPrice', ethPrice);
   // initialAllocation()
   initialAllocation(5,5);
-  // setState()
-  
-
-  // changePrice()
-  // changePrice(0.10);
+  // set and record initial state
+  setInitialState();
+  // transact()
+  transact(1, 0.1, 'deposit', 'longAllocation', 1); // user 1, +10% change, 1 ETH
   // reallocate()
   // recordState()
+
+
   // deposit() or withdraw()
   // reallocate()
   // recordState()
@@ -224,15 +263,68 @@ function simulateUse() {
 
 // user: 0 is Protocol, 1 is Alice, 2 is Bob, 3 is Chris, 4 is Dan
 // ethPercentChange: percent change in ETH/USD,  
-// type: '0' is deposit, '1' is withdraw
+// type: 'deposit' or 'withdawal'
 // tranche: 'longAllocation' or 'diminishedAllocation'
 // amount: amount of ETH to transact
 function transact(user, ethPercentChange, type, tranche, amount) {
   // do not reallocate if either tranch is 0
   getCurrentValues();
+  changePriceBy(ethPercentChange);
   if(preCalcLongBal > 0 && preCalcDimBal > 0) {
-    // reallocate
+    // reallocate()
+    // reallocation process >>>(FINISH!!!!)<<< create a function
+      // calculate allocations at new price (the two tranches just)
+        // search through array of users for percent ownership
+        // assign ETH according to (tranchBal * percentOwned)
+          // update userBalances being sure to clear all old data
     console.log('good to go');
+    let preTxState = JSON.parse(JSON.stringify(state));
+    // add user, if non-existent
+    if(state.userBalances.find(x => x.user !== user)) {
+      console.log('user not found');
+      let newUser = {
+        user: user,
+        longTranche: {
+          ethBal: 0,
+          usdBal: 0,
+          percent: 0,
+        },
+        diminishedTranche: {
+          ethBal: 0,
+          usdBal: 0,
+          percent: 0,
+        }
+      }
+      state.userBalances.push(newUser);
+    };
+    // actual transaction here...
+      // add users funds to tranch balance
+      // reallocate()
+
+    // end transaction here^
+    let postTxState = JSON.parse(JSON.stringify(state));
+    txID++; // if tx fails, fill a tx with 'fail' text
+    let tx = {
+      transactionID: txID,
+      type: type,
+      ethPrice: ethPrice,
+      percentChange: ethPercentChange,
+      stateSnapOne: preTxState,
+      transactionDetails: {
+        // User
+        user: user,
+        // Affected Tranche
+        tranche: tranche,
+        // Transaction amount ETH
+        amount: amount,
+        // Transaction amount USD
+      },
+      stateSnapTwo: postTxState,
+    };
+
+    txHistory.push(tx);
+    console.log(tx);
+    console.log(txHistory);
   }
 }
 
@@ -250,7 +342,7 @@ function addInteractionSheet() {
   return txSheet;
 }
 
-function changePrice(percentChange) {
+function changePriceBy(percentChange) {
   ethPrice = ethPrice * (1 + percentChange);
   sheet.getRange('endingPrice').setValue(ethPrice);
 }
