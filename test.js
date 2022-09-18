@@ -133,6 +133,35 @@ function changePrice(percentChange) {
   sheet.getRange('endingPrice').setValue(ethPrice);
 }
 
+
+// TRANSACTION HISTORY OBJECT
+  // Transaction ID
+  // ETH price
+  // State Snapshot One (after reallocation using txHistory[-1].snapshotTwo)
+  // Transaction Details
+    // Affected Tranche
+    // Transaction amount ETH
+    // Transaction amount USD
+  // State Snapshot Two (after 2nd reallocation using State Snapshot One)
+
+// STATE OBJECT (Represents the current state of the protocol)
+  // User Balances
+    // Long Tranche
+      // ETH Balance
+      // USD Balance
+      // Percent Ownership
+    // Diminished Tranche
+      // ETH Balance
+      // USD Balance
+      // Percent Ownership
+  // Tranche Balances
+    // Long Tranche
+      // ETH Balance
+      // USD Balance
+    // Diminished Tranche
+      // ETH Balance
+      // USD Balance
+
 // NEEDED FUNCTIONS
   // deposit to tranche
     // reallocate with new price
