@@ -342,6 +342,12 @@ function transact(user, ethPercentChange, type, tranche, amount) {
     };
     // actual transaction here...
       // add users funds to tranch balance
+
+      // transact with BE!!!!
+        // record ending balances
+        // set startingPrice = endingPrice
+        // set starting balances = ending balances
+        // BELOW don't add to ending balances, add to beginning balances
     switch (tranche) {
       case 'longAllocation':
         switch (type) {
@@ -349,13 +355,13 @@ function transact(user, ethPercentChange, type, tranche, amount) {
             console.log('deposit switch');
             state.userBalances[user].longTranche.ethBal += amount;
             state.trancheBalances.longTranche.ethBal += amount;
-            changeValueBy('longETHBal', amount);
+            // changeValueBy('longETHBal', amount);
             break;
           case 'withdrawal':
             console.log('withdrawal switch');
             state.userBalances[user].longTranche.ethBal -= amount;
             state.trancheBalances.longTranche.ethBal -= amount;
-            changeValueBy('longETHBal', -amount);
+            // changeValueBy('longETHBal', -amount);
             break;
         };
         break;
@@ -364,12 +370,12 @@ function transact(user, ethPercentChange, type, tranche, amount) {
           case 'deposit':
             state.userBalances[user].diminishedTranche.ethBal += amount;
             state.trancheBalances.diminishedTranche.ethBal += amount;
-            changeValueBy('diminishedETHBalance', amount);
+            // changeValueBy('diminishedETHBalance', amount);
             break;
           case 'withdrawal':
             state.userBalances[user].diminishedTranche.ethBal -= amount;
             state.trancheBalances.diminishedTranche.ethBal -= amount;
-            changeValueBy('diminishedETHBalance', -amount);
+            // changeValueBy('diminishedETHBalance', -amount);
             break;
         };
         break;
