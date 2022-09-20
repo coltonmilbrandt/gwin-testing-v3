@@ -378,11 +378,13 @@ function transact(user, ethPercentChange, type, tranche, amount) {
       case 'diminishedTranche':
           switch (type) {
           case 'deposit':
+            console.log('depositing...');
             state.userBalances[user].diminishedTranche.ethBal += amount;
             state.trancheBalances.diminishedTranche.ethBal += amount;
             changeValueBy('diminishedAllocation', amount);
             break;
           case 'withdrawal':
+            console.log('withdrawing...');
             state.userBalances[user].diminishedTranche.ethBal -= amount;
             state.trancheBalances.diminishedTranche.ethBal -= amount;
             changeValueBy('diminishedAllocation', -amount);
@@ -421,22 +423,51 @@ function transact(user, ethPercentChange, type, tranche, amount) {
     txHistory.push(tx);
     console.log(JSON.stringify(tx));
     console.log(JSON.stringify(state));
+    exportData();
   };
 };
 
+let txRow = 2;
+
 function exportData() {
+  let txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
   let row = [];
-  
+  // get headers which are the keys
+  txSheet.getRange(txRow,1).setValue(ethPrice);
+  txSheet.getRange(txRow,2).setValue(state.trancheBalances.longTranche.ethBal);
+  txSheet.getRange(txRow,3).setValue(state.trancheBalances.diminishedTranche.ethBal);
+  let col = 4;
+  let userId = 0;
+  while (col < 32) {
+    if(state.userBalances.some(u => u.user === userId) == true) {
+      txSheet.getRange(txRow,col).setValue(state.userBalances[userId].longTranche.ethBal);
+      col++;
+      txSheet.getRange(txRow,col).setValue(state.userBalances[userId].longTranche.usdBal);
+      col++;
+      txSheet.getRange(txRow,col).setValue(state.userBalances[userId].longTranche.percent);
+      col++;
+      txSheet.getRange(txRow,col).setValue(state.userBalances[userId].diminishedTranche.ethBal);
+      col++;
+      txSheet.getRange(txRow,col).setValue(state.userBalances[userId].diminishedTranche.usdBal);
+      col++;
+      txSheet.getRange(txRow,col).setValue(state.userBalances[userId].diminishedTranche.percent);
+      col++;
+    } else {
+      txSheet.getRange(txRow,col,1,6).setValue([0,0,0,0,0,0]);
+      col = col + 6;
+    }
+    userId++;
+  }
+  txRow++;
 }
-
-
 
 function addInteractionSheet() {
   // Create new sheet if it doesn't exist already
+  let txSheet;
   if (SpreadsheetApp.getActive().getSheetByName('Interaction') == null) {
-    var txSheet = ss.insertSheet('Interaction');
+    txSheet = ss.insertSheet('Interaction');
   } else {
-    var txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
+    txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
   };
   return txSheet;
 };
