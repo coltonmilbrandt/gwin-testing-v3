@@ -254,7 +254,7 @@ function recordUserState() {
   // percent owned only changes when allocations change
 };
 
-function updateUserPercentOwned() {
+function updateUserState() {
   getCurrentValues();
   for (let i = 0; i < state.userBalances.length; i++) {
     let x = endLongBal;
@@ -263,6 +263,9 @@ function updateUserPercentOwned() {
     let k = endDimBal;
     let z = state.userBalances[i].diminishedTranche.ethBal;
     state.userBalances[i].diminishedTranche.percent = z / k;
+
+    state.userBalances[i].longTranche.usdBal = y * ethPrice;
+    state.userBalances[i].diminishedTranche.usdBal = z * ethPrice;
   };
 };
 
@@ -283,14 +286,12 @@ function simulateUse() {
   // set and record initial state
   setInitialState();
   // transact()
-  transact(1, 0.1, 'deposit', 'longAllocation', 1); // user 1, +10% change, 1 ETH
-  // reallocate()
-  // recordState()
-
-
-  // deposit() or withdraw()
-  // reallocate()
-  // recordState()
+  // transact(user, ethPercentChange, type, tranche, amount)
+  transact(1, 0.1, 'deposit', 'longTranche', 1); 
+  transact(1, 0.1, 'deposit', 'longTranche', 1);
+  transact(1, 0.1, 'withdrawal', 'longTranche', 1);
+  console.log('final state');
+  console.log(JSON.stringify(state));
 }
 
 function adjustForNewTx() {
@@ -315,7 +316,7 @@ function reallocate(priceChange) {
 // user: 0 is Protocol, 1 is Alice, 2 is Bob, 3 is Chris, 4 is Dan
 // ethPercentChange: percent change in ETH/USD,  
 // type: 'deposit' or 'withdawal'
-// tranche: 'longAllocation' or 'diminishedAllocation'
+// tranche: 'longTranche' or 'diminishedTranche'
 // amount: amount of ETH to transact
 function transact(user, ethPercentChange, type, tranche, amount) {
   // do not reallocate if either tranch is 0
@@ -323,10 +324,21 @@ function transact(user, ethPercentChange, type, tranche, amount) {
   changePriceBy(ethPercentChange);
   if(preCalcLongBal > 0 && preCalcDimBal > 0) {
     reallocate(ethPercentChange);
+    if (type == 'withdrawal') {
+      // state.userBalances[user].longTranche.ethBal
+      // state.userBalances[user][tranche].ethBal
+      console.log('eth bal user: ' + JSON.stringify(state.userBalances[user]));
+      console.log('amount: ' + amount);
+      if (state.userBalances.some(u => u.user === user) == false || state.userBalances[user][tranche].ethBal < amount) {
+        console.log('User does not exist, or not enough ETH to withdraw');
+        return;
+      };
+    };
     console.log('good to go');
+    updateUserState();
     let preTxState = JSON.parse(JSON.stringify(state));
     // add user, if non-existent
-    if(state.userBalances.find(x => x.user !== user)) {
+    if(state.userBalances.some(u => u.user === user) == false) {
       console.log('user not found');
       let newUser = {
         user: user,
@@ -349,7 +361,7 @@ function transact(user, ethPercentChange, type, tranche, amount) {
 
     // actually add the amount to the tranche
     switch (tranche) {
-      case 'longAllocation':
+      case 'longTranche':
         switch (type) {
           case 'deposit':
             console.log('deposit switch');
@@ -365,7 +377,7 @@ function transact(user, ethPercentChange, type, tranche, amount) {
             break;
         };
         break;
-      case 'diminishedAllocation':
+      case 'diminishedTranche':
           switch (type) {
           case 'deposit':
             state.userBalances[user].diminishedTranche.ethBal += amount;
@@ -384,10 +396,8 @@ function transact(user, ethPercentChange, type, tranche, amount) {
     console.log(state.userBalances[user]);
     console.log(state.userBalances[user].longTranche.ethBal);
     console.log(state.userBalances[user].diminishedTranche.ethBal);
-    //update user percent owned
-    updateUserPercentOwned();
-    console.log("eth price is: " + ethPrice);
-    // Update USD balance!!! >>>needs done<<<<
+    // update user percent owned and usd balance
+    updateUserState();
     recordUserState();
 
     // end transaction here^
