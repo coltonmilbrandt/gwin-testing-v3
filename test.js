@@ -213,8 +213,6 @@ function setInitialState() {
   };
 
   txHistory.push(initTx);
-  console.log(txHistory);
-  console.log(txHistory.find(x => x.transactionID === 0).stateSnapTwo);
 };
 
 // TRANSACTION OBJECT
@@ -235,8 +233,6 @@ function recordProtocolState() {
   state.trancheBalances.longTranche.usdBal = endLongUSD;
   state.trancheBalances.diminishedTranche.ethBal = endDimBal;
   state.trancheBalances.diminishedTranche.usdBal = endDimUSD;
-  console.log('state');
-  console.log(state);
 };
 
 function recordUserState() {
@@ -307,7 +303,7 @@ function adjustForNewTx() {
 
 function reallocate(priceChange) {
   endingPrice = startingPrice + (startingPrice * priceChange);
-  console.log(endingPrice);
+  console.log('ending price: ' + endingPrice);
   setValue('endingPrice', endingPrice);
   recordProtocolState();
   recordUserState();
@@ -325,21 +321,16 @@ function transact(user, ethPercentChange, type, tranche, amount) {
   if(preCalcLongBal > 0 && preCalcDimBal > 0) {
     reallocate(ethPercentChange);
     if (type == 'withdrawal') {
-      // state.userBalances[user].longTranche.ethBal
-      // state.userBalances[user][tranche].ethBal
-      console.log('eth bal user: ' + JSON.stringify(state.userBalances[user]));
-      console.log('amount: ' + amount);
       if (state.userBalances.some(u => u.user === user) == false || state.userBalances[user][tranche].ethBal < amount) {
         console.log('User does not exist, or not enough ETH to withdraw');
         return;
       };
     };
-    console.log('good to go');
     updateUserState();
     let preTxState = JSON.parse(JSON.stringify(state));
     // add user, if non-existent
     if(state.userBalances.some(u => u.user === user) == false) {
-      console.log('user not found');
+      console.log('User not found. Creating user...');
       let newUser = {
         user: user,
         longTranche: {
@@ -364,13 +355,13 @@ function transact(user, ethPercentChange, type, tranche, amount) {
       case 'longTranche':
         switch (type) {
           case 'deposit':
-            console.log('deposit switch');
+            console.log('depositing...');
             state.userBalances[user].longTranche.ethBal += amount;
             state.trancheBalances.longTranche.ethBal += amount;
             changeValueBy('longAllocation', amount);
             break;
           case 'withdrawal':
-            console.log('withdrawal switch');
+            console.log('withdrawing...');
             state.userBalances[user].longTranche.ethBal -= amount;
             state.trancheBalances.longTranche.ethBal -= amount;
             changeValueBy('longAllocation', -amount);
@@ -392,10 +383,9 @@ function transact(user, ethPercentChange, type, tranche, amount) {
         };
         break;
     }
-    console.log('user new balance follows:')
-    console.log(state.userBalances[user]);
-    console.log(state.userBalances[user].longTranche.ethBal);
-    console.log(state.userBalances[user].diminishedTranche.ethBal);
+    console.log('user ' + user + 's new balance follows:')
+    console.log('long: ' + state.userBalances[user].longTranche.ethBal);
+    console.log('diminished: ' + state.userBalances[user].diminishedTranche.ethBal);
     // update user percent owned and usd balance
     updateUserState();
     recordUserState();
@@ -422,8 +412,7 @@ function transact(user, ethPercentChange, type, tranche, amount) {
     };
 
     txHistory.push(tx);
-    console.log(tx);
-    console.log(JSON.stringify(txHistory));
+    console.log(JSON.stringify(state));
   }
 }
 
@@ -432,10 +421,8 @@ function transact(user, ethPercentChange, type, tranche, amount) {
 function addInteractionSheet() {
   // Create new sheet if it doesn't exist already
   if (SpreadsheetApp.getActive().getSheetByName('Interaction') == null) {
-    console.log('1');
     var txSheet = ss.insertSheet('Interaction');
   } else {
-    console.log('2');
     var txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
   }
   return txSheet;
