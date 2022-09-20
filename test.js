@@ -265,10 +265,7 @@ function updateUserState() {
   };
 };
 
-function setState() {
-
-}
-
+// Manual Version
 function simulateUse() {
   addInteractionSheet();
   // Set Starting Price
@@ -292,6 +289,8 @@ function simulateUse() {
 
 function adjustForNewTx() {
   getCurrentValues();
+  console.log(startingPrice);
+  console.log(endingPrice);
   startingPrice = endingPrice;
   setValue('startingPrice', startingPrice);
   let l = endLongBal;
@@ -307,6 +306,14 @@ function reallocate(priceChange) {
   setValue('endingPrice', endingPrice);
   recordProtocolState();
   recordUserState();
+}
+
+const users = {
+  0: 'Protocol',
+  1: 'Alice',
+  2: 'Bob',
+  3: 'Chris',
+  4: 'Dan',
 }
 
 // user: 0 is Protocol, 1 is Alice, 2 is Bob, 3 is Chris, 4 is Dan
@@ -383,16 +390,18 @@ function transact(user, ethPercentChange, type, tranche, amount) {
         };
         break;
     }
-    console.log('user ' + user + 's new balance follows:')
+    console.log('user: ' + user + ', ' + users[user] + 's new balance follows:')
     console.log('long: ' + state.userBalances[user].longTranche.ethBal);
     console.log('diminished: ' + state.userBalances[user].diminishedTranche.ethBal);
     // update user percent owned and usd balance
     updateUserState();
     recordUserState();
+    recordProtocolState();
 
     // end transaction here^
     let postTxState = JSON.parse(JSON.stringify(state));
     txID++; // if tx fails, fill a tx with 'fail' data
+    let usdTxAmount = amount * ethPrice;
     let tx = {
       transactionID: txID,
       type: type,
@@ -400,20 +409,24 @@ function transact(user, ethPercentChange, type, tranche, amount) {
       percentChange: ethPercentChange,
       stateSnapOne: preTxState,
       transactionDetails: {
-        // User
         user: user,
-        // Affected Tranche
         tranche: tranche,
-        // Transaction amount ETH
-        amount: amount,
-        // Transaction amount USD
+        txType: type,
+        ethAmount: amount,
+        usdAmount: usdTxAmount,
       },
       stateSnapTwo: postTxState,
     };
 
     txHistory.push(tx);
+    console.log(JSON.stringify(tx));
     console.log(JSON.stringify(state));
-  }
+  };
+};
+
+function exportData() {
+  let row = [];
+  
 }
 
 
@@ -424,14 +437,14 @@ function addInteractionSheet() {
     var txSheet = ss.insertSheet('Interaction');
   } else {
     var txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
-  }
+  };
   return txSheet;
-}
+};
 
 function changePriceBy(percentChange) {
   ethPrice = ethPrice * (1 + percentChange);
   sheet.getRange('endingPrice').setValue(ethPrice);
-}
+};
 
 // TRANSACTION HISTORY OBJECT
   // transaction 1
