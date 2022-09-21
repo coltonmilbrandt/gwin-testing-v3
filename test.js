@@ -305,7 +305,7 @@ function simulateRandomUse() {
   setValue('startingPrice', startingPrice);
   setValue('endingPrice', endingPrice);
   // initialAllocation()
-  initialAllocation(5,5);
+  initialAllocation(30,30);
   // set and record initial state
   setInitialState();
   createUsers();
@@ -320,8 +320,6 @@ function simulateRandomUse() {
     }
     currentDay = day;
     let tradePrice = ethPriceArray[day];
-    console.log(tradePrice);
-    console.log(currentDay);
     let percentChangeConversion = (tradePrice - startingPrice) / startingPrice;
     transact(user, percentChangeConversion, type, tranche, amount);
   };
@@ -341,24 +339,88 @@ function simulateRandomUse() {
         withdrawalAmount = state.userBalances[user].longTranche.ethBal;
         break;
       case 'diminishedTranche':
-        console.log(state.userBalances[user].diminishedTranche.ethBal);
         withdrawalAmount = state.userBalances[user].diminishedTranche.ethBal;
-        console.log(withdrawalAmount);
         break;
     };
-    console.log('withdrawal amount: ' + withdrawalAmount);
     trade(user, day, 'withdrawal', tranche, withdrawalAmount);
   };
   // user, day                       amount
-  trade(1, 1, 'deposit', 'longTranche', 1);
-  trade(4, 1, 'deposit', 'diminishedTranche', 1);
-  trade(2, 2, 'deposit', 'longTranche', 1);
-  trade(3, 2, 'deposit', 'diminishedTranche', 1);
-  withdrawAll(4, 8, 'diminishedTranche');
-  withdrawAll(2, 15, 'longTranche');
-  trade(2, 20, 'deposit', 'diminishedTranche', 1);
-  withdrawAll(3, 31, 'diminishedTranche');
+  // trade(1, 1, 'deposit', 'longTranche', 1);
+  // trade(4, 1, 'deposit', 'diminishedTranche', 1);
+  // trade(2, 2, 'deposit', 'longTranche', 1);
+  // trade(3, 2, 'deposit', 'diminishedTranche', 1);
+  // withdrawAll(4, 8, 'diminishedTranche');
+  // withdrawAll(2, 15, 'longTranche');
+  // trade(2, 20, 'deposit', 'diminishedTranche', 1);
+  // withdrawAll(3, 31, 'diminishedTranche');
 
+  txDay = 0;
+
+  for (let i = 0; i < 50; i++) {
+    let transactionType = randomIntFromInterval(1,2);
+    let transactionTranche = randomIntFromInterval(1,2);
+    let userToTransact = randomIntFromInterval(1,4);
+    let daysSinceLastTx = randomIntFromInterval(20,40);
+    let amountToTransact = randomIntFromInterval(1,100) / 10;
+    txDay += daysSinceLastTx;
+    console.log('on day ' + txDay + ' ' + transactionType + ' of ' + amountToTransact + ' to ' + transactionTranche);
+    switch (transactionType) {
+      case 1: // deposit
+        console.log('deposit');
+        switch (transactionTranche) {
+          case 1: // long
+            console.log('long');
+            if(state.userBalances[userToTransact].diminishedTranche.ethBal > 0) {
+              withdrawAll(userToTransact, txDay, 'diminishedTranche');
+              console.log('withdraw diminished');
+            };
+            trade(userToTransact, txDay, 'deposit', 'longTranche', amountToTransact);
+            console.log('and then deposit long');
+            break;
+          case 2: // diminished
+          console.log('diminished');
+            if(state.userBalances[userToTransact].longTranche.ethBal > 0) {
+              withdrawAll(userToTransact, txDay, 'longTranche');
+              console.log('withdraw long');
+            };
+            trade(userToTransact, txDay, 'deposit', 'diminishedTranche', amountToTransact);
+            console.log('and then deposit diminished');
+            break;
+        }
+        break;
+      case 2: // withdraw
+        console.log('withdawal');
+        switch (transactionTranche) {
+          case 1: // long
+            console.log('long');
+            if(state.userBalances[userToTransact].longTranche.ethBal > 0) {
+              withdrawAll(userToTransact, txDay, 'longTranche');
+              console.log('withdraw deposit');
+            } else if (state.userBalances[userToTransact].diminishedTranche.ethBal > 0) {
+              withdrawAll(userToTransact, txDay, 'diminishedTranche');
+              console.log('withdraw diminished');
+            } else {
+              console.log('deposit diminished');
+              trade(userToTransact, txDay, 'deposit', 'diminishedTranche', amountToTransact);
+            }
+            break;
+          case 2: // diminished
+            console.log('diminished');
+            if(state.userBalances[userToTransact].diminishedTranche.ethBal > 0) {
+              withdrawAll(userToTransact, txDay, 'diminishedTranche');
+              console.log('withdraw diminished');
+            } else if (state.userBalances[userToTransact].longTranche.ethBal > 0) {
+              withdrawAll(userToTransact, txDay, 'longTranche');
+              console.log('withdraw long');
+            } else {
+              trade(userToTransact, txDay, 'deposit', 'longTranche', amountToTransact);
+              console.log('deposit long');
+            }
+            break;
+        }
+        break;
+    }
+  }
 
 
   // trade(3, 1, 'deposit', 'longTranche', 1);
@@ -367,14 +429,16 @@ function simulateRandomUse() {
   // trade(3, 1, 'withdrawal', 'diminishedTranche', 1);
   
   
-  console.log('final state');
-  console.log(JSON.stringify(state));
+  // console.log('final state');
+  // console.log(JSON.stringify(state));
+}
+
+function randomIntFromInterval(min, max) { // min and max included 
+  return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
 function adjustForNewTx() {
   getCurrentValues();
-  console.log(startingPrice);
-  console.log(endingPrice);
   startingPrice = endingPrice;
   setValue('startingPrice', startingPrice);
   let l = endLongBal;
@@ -386,7 +450,6 @@ function adjustForNewTx() {
 
 function reallocate(priceChange) {
   endingPrice = startingPrice + (startingPrice * priceChange);
-  console.log('ending price: ' + endingPrice);
   setValue('endingPrice', endingPrice);
   recordProtocolState();
   recordUserState();
@@ -407,7 +470,6 @@ function createUsers() {
         percent: 0,
       }
     }
-    console.log(i);
     state.userBalances.push(newUser);
   }
 }
@@ -529,8 +591,8 @@ function transact(user, ethPercentChange, type, tranche, amount) {
     };
 
     txHistory.push(tx);
-    console.log(JSON.stringify(tx));
-    console.log(JSON.stringify(state));
+    // console.log(JSON.stringify(tx));
+    // console.log(JSON.stringify(state));
     exportData(tx.transactionDetails);
   };
 };
