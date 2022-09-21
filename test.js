@@ -265,6 +265,11 @@ function updateUserState() {
   };
 };
 
+// Average ETH hold time is 113 days
+// Long tranche should trade every month
+// Dim tranche could hold for 3 months
+// 
+
 // Manual Version
 function simulateUse() {
   addInteractionSheet();
@@ -283,6 +288,85 @@ function simulateUse() {
   transact(1, 0.1, 'deposit', 'longTranche', 1); 
   transact(1, 0.1, 'deposit', 'longTranche', 1);
   transact(1, 0.1, 'withdrawal', 'longTranche', 1);
+  console.log('final state');
+  console.log(JSON.stringify(state));
+}
+ 
+let currentDay = 0;
+
+// Random Version
+function simulateRandomUse() {
+  addInteractionSheet();
+
+  // Set Starting Price
+  ethPrice = 1700;
+  startingPrice = ethPrice;
+  endingPrice = ethPrice;
+  setValue('startingPrice', startingPrice);
+  setValue('endingPrice', endingPrice);
+  // initialAllocation()
+  initialAllocation(5,5);
+  // set and record initial state
+  setInitialState();
+  createUsers();
+  let priceSheet = SpreadsheetApp.getActive().getSheetByName('ethPrice');
+  let ethPriceArray = priceSheet.getRange('ethPriceArray').getValues();
+  
+  function trade(user, day, type, tranche, amount) {
+    if (day < currentDay) {
+      console.error('Error: day is already past. You do not have a time machine.');
+      console.error('Simulation aborted.');
+      return;
+    }
+    currentDay = day;
+    let tradePrice = ethPriceArray[day];
+    console.log(tradePrice);
+    console.log(currentDay);
+    let percentChangeConversion = (tradePrice - startingPrice) / startingPrice;
+    transact(user, percentChangeConversion, type, tranche, amount);
+  };
+  function withdrawAll(user, day, tranche) {
+    let tradePrice = ethPriceArray[day];
+    let percentChangeConversion = (tradePrice - startingPrice) / startingPrice;
+
+    getCurrentValues();
+    changePriceBy(percentChangeConversion);
+    reallocate(percentChangeConversion);
+    updateUserState();
+    adjustForNewTx();
+
+    let withdrawalAmount;
+    switch (tranche) {
+      case 'longTranche':
+        withdrawalAmount = state.userBalances[user].longTranche.ethBal;
+        break;
+      case 'diminishedTranche':
+        console.log(state.userBalances[user].diminishedTranche.ethBal);
+        withdrawalAmount = state.userBalances[user].diminishedTranche.ethBal;
+        console.log(withdrawalAmount);
+        break;
+    };
+    console.log('withdrawal amount: ' + withdrawalAmount);
+    trade(user, day, 'withdrawal', tranche, withdrawalAmount);
+  };
+  // user, day                       amount
+  trade(1, 1, 'deposit', 'longTranche', 1);
+  trade(4, 1, 'deposit', 'diminishedTranche', 1);
+  trade(2, 2, 'deposit', 'longTranche', 1);
+  trade(3, 2, 'deposit', 'diminishedTranche', 1);
+  withdrawAll(4, 8, 'diminishedTranche');
+  withdrawAll(2, 15, 'longTranche');
+  trade(2, 20, 'deposit', 'diminishedTranche', 1);
+  withdrawAll(3, 31, 'diminishedTranche');
+
+
+
+  // trade(3, 1, 'deposit', 'longTranche', 1);
+  // trade(3, 1, 'withdrawal', 'longTranche', 1);
+  // trade(3, 1, 'deposit', 'diminishedTranche', 1);
+  // trade(3, 1, 'withdrawal', 'diminishedTranche', 1);
+  
+  
   console.log('final state');
   console.log(JSON.stringify(state));
 }
@@ -308,6 +392,26 @@ function reallocate(priceChange) {
   recordUserState();
 }
 
+function createUsers() {
+  for (var i = 1; i <= 4; i++) {
+    let newUser = {
+      user: i,
+      longTranche: {
+        ethBal: 0,
+        usdBal: 0,
+        percent: 0,
+      },
+      diminishedTranche: {
+        ethBal: 0,
+        usdBal: 0,
+        percent: 0,
+      }
+    }
+    console.log(i);
+    state.userBalances.push(newUser);
+  }
+}
+
 const users = {
   0: 'Protocol',
   1: 'Alice',
@@ -328,8 +432,12 @@ function transact(user, ethPercentChange, type, tranche, amount) {
   if(preCalcLongBal > 0 && preCalcDimBal > 0) {
     reallocate(ethPercentChange);
     if (type == 'withdrawal') {
-      if (state.userBalances.some(u => u.user === user) == false || state.userBalances[user][tranche].ethBal < amount) {
-        console.log('User does not exist, or not enough ETH to withdraw');
+      if (state.userBalances.some(u => u.user === user) == false) {
+        console.error('User does not exist.');
+        return;
+      };
+      if (state.userBalances[user][tranche].ethBal < amount) {
+        console.error('Not enough ETH to withdraw.');
         return;
       };
     };
@@ -423,16 +531,14 @@ function transact(user, ethPercentChange, type, tranche, amount) {
     txHistory.push(tx);
     console.log(JSON.stringify(tx));
     console.log(JSON.stringify(state));
-    exportData();
+    exportData(tx.transactionDetails);
   };
 };
 
 let txRow = 2;
 
-function exportData() {
+function exportData(tx) {
   let txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
-  let row = [];
-  // get headers which are the keys
   txSheet.getRange(txRow,1).setValue(ethPrice);
   txSheet.getRange(txRow,2).setValue(state.trancheBalances.longTranche.ethBal);
   txSheet.getRange(txRow,3).setValue(state.trancheBalances.diminishedTranche.ethBal);
@@ -458,6 +564,16 @@ function exportData() {
     }
     userId++;
   }
+  txSheet.getRange(txRow,col).setValue(tx.user);
+  col++;
+  txSheet.getRange(txRow,col).setValue(tx.tranche);
+  col++;
+  txSheet.getRange(txRow,col).setValue(tx.txType);
+  col++;
+  txSheet.getRange(txRow,col).setValue(tx.ethAmount);
+  col++;
+  txSheet.getRange(txRow,col).setValue(tx.usdAmount);
+  col++;
   txRow++;
 }
 
