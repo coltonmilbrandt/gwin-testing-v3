@@ -360,7 +360,8 @@ function simulateRandomUse() {
     let transactionType = randomIntFromInterval(1,2);
     let transactionTranche = randomIntFromInterval(1,2);
     let userToTransact = randomIntFromInterval(1,4);
-    let daysSinceLastTx = randomIntFromInterval(20,40);
+    // let daysSinceLastTx = randomIntFromInterval(20,40); 
+    let daysSinceLastTx = 10;
     let amountToTransact = randomIntFromInterval(1,100) / 10;
     txDay += daysSinceLastTx;
     console.log('on day ' + txDay + ' ' + transactionType + ' of ' + amountToTransact + ' to ' + transactionTranche);
@@ -590,7 +591,7 @@ function transact(user, ethPercentChange, type, tranche, amount) {
       stateSnapTwo: postTxState,
     };
 
-    txHistory.push(tx);
+    // txHistory.push(tx); // temporary comment
     // console.log(JSON.stringify(tx));
     // console.log(JSON.stringify(state));
     exportData(tx.transactionDetails);
