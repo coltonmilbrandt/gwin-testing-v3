@@ -388,7 +388,7 @@ function setTrades(user, percentChangeConversion, type, tranche, amount, tradePr
       transactor.ethGain = (transactor.ethEnd - transactor.ethSpent) / transactor.ethSpent;
       
       let mult = 1.5;
-      if (tranch == 'diminishedTranche'){
+      if (tranche == 'diminishedTranche'){
         mult = 0.5;
       };
 
@@ -396,15 +396,15 @@ function setTrades(user, percentChangeConversion, type, tranche, amount, tradePr
       let percCheck = 0;
 
       for (let i = 0; i < transactor.buys.length; i++) {
-        let percWeight = transactor.buys[i] / transactor.usdEnd;
-        let actualEthGain = (transactor.tradePrices[i] - tradePrice) / tradePrice;  
+        let percWeight = transactor.buys[i] / transactor.usdSpent;
+        let actualEthGain = (tradePrice - transactor.tradePrices[i]) / transactor.tradePrices[i];
         expectedGain += (actualEthGain * percWeight) * mult;
         percCheck += percWeight;
       };
       console.log('Perc Check!! Should equal 1: ' + percCheck);
-      transactor.expGain.push(expectedGain);
+      transactor.expGain = expectedGain;
       tradeTxs.push(JSON.parse(JSON.stringify(transactor)));
-      console.log(tradeTxs);
+      console.log(JSON.stringify(tradeTxs));
       transactor.buys = [];
       transactor.tradePrices = [];
       transactor.asset = '';
