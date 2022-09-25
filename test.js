@@ -305,7 +305,8 @@ function simulateRandomUse() {
   setValue('startingPrice', startingPrice);
   setValue('endingPrice', endingPrice);
   // initialAllocation()
-  initialAllocation(30,30);
+  initialAllocation(1,5);
+  // initialAllocation(30,30);
   // set and record initial state
   setInitialState();
   createUsers();
@@ -356,6 +357,7 @@ function simulateRandomUse() {
 
   txDay = 0;
 
+  // START common sense simulation
   for (let i = 0; i < 50; i++) {
     let transactionType = randomIntFromInterval(1,2);
     let transactionTranche = randomIntFromInterval(1,2);
@@ -365,6 +367,24 @@ function simulateRandomUse() {
     let amountToTransact = randomIntFromInterval(1,100) / 10;
     txDay += daysSinceLastTx;
     console.log('on day ' + txDay + ' ' + transactionType + ' of ' + amountToTransact + ' to ' + transactionTranche);
+    let l = state.trancheBalances.longTranche.ethBal;
+    let d = state.trancheBalances.diminishedTranche.ethBal;
+    let longRatio = l / d;
+    if (longRatio < 0.8) {
+      if (longRatio < 0.50) {
+        amountToTransact = (0.5 * d) - l;
+      };
+      userToTransact = randomIntFromInterval(1,2);
+      transactionTranche = 1;
+      transactionType = 1;
+    } else if (longRatio > 1.3) {
+      if (longRatio > 1.5) {
+        amountToTransact = (0.6667 * l) - d;
+      };
+      userToTransact = randomIntFromInterval(3,4);
+      transactionTranche = 2;
+      transactionType = 1;
+    };
     switch (transactionType) {
       case 1: // deposit
         console.log('deposit');
@@ -422,6 +442,76 @@ function simulateRandomUse() {
         break;
     }
   }
+  // END common sense simulation
+
+  // START classic simulation
+  // for (let i = 0; i < 50; i++) {
+  //   let transactionType = randomIntFromInterval(1,2);
+  //   let transactionTranche = randomIntFromInterval(1,2);
+  //   let userToTransact = randomIntFromInterval(1,4);
+  //   // let daysSinceLastTx = randomIntFromInterval(20,40); 
+  //   let daysSinceLastTx = 10;
+  //   let amountToTransact = randomIntFromInterval(1,100) / 10;
+  //   txDay += daysSinceLastTx;
+  //   console.log('on day ' + txDay + ' ' + transactionType + ' of ' + amountToTransact + ' to ' + transactionTranche);
+  //   switch (transactionType) {
+  //     case 1: // deposit
+  //       console.log('deposit');
+  //       switch (transactionTranche) {
+  //         case 1: // long
+  //           console.log('long');
+  //           if(state.userBalances[userToTransact].diminishedTranche.ethBal > 0) {
+  //             withdrawAll(userToTransact, txDay, 'diminishedTranche');
+  //             console.log('withdraw diminished');
+  //           };
+  //           trade(userToTransact, txDay, 'deposit', 'longTranche', amountToTransact);
+  //           console.log('and then deposit long');
+  //           break;
+  //         case 2: // diminished
+  //         console.log('diminished');
+  //           if(state.userBalances[userToTransact].longTranche.ethBal > 0) {
+  //             withdrawAll(userToTransact, txDay, 'longTranche');
+  //             console.log('withdraw long');
+  //           };
+  //           trade(userToTransact, txDay, 'deposit', 'diminishedTranche', amountToTransact);
+  //           console.log('and then deposit diminished');
+  //           break;
+  //       }
+  //       break;
+  //     case 2: // withdraw
+  //       console.log('withdawal');
+  //       switch (transactionTranche) {
+  //         case 1: // long
+  //           console.log('long');
+  //           if(state.userBalances[userToTransact].longTranche.ethBal > 0) {
+  //             withdrawAll(userToTransact, txDay, 'longTranche');
+  //             console.log('withdraw deposit');
+  //           } else if (state.userBalances[userToTransact].diminishedTranche.ethBal > 0) {
+  //             withdrawAll(userToTransact, txDay, 'diminishedTranche');
+  //             console.log('withdraw diminished');
+  //           } else {
+  //             console.log('deposit diminished');
+  //             trade(userToTransact, txDay, 'deposit', 'diminishedTranche', amountToTransact);
+  //           }
+  //           break;
+  //         case 2: // diminished
+  //           console.log('diminished');
+  //           if(state.userBalances[userToTransact].diminishedTranche.ethBal > 0) {
+  //             withdrawAll(userToTransact, txDay, 'diminishedTranche');
+  //             console.log('withdraw diminished');
+  //           } else if (state.userBalances[userToTransact].longTranche.ethBal > 0) {
+  //             withdrawAll(userToTransact, txDay, 'longTranche');
+  //             console.log('withdraw long');
+  //           } else {
+  //             trade(userToTransact, txDay, 'deposit', 'longTranche', amountToTransact);
+  //             console.log('deposit long');
+  //           }
+  //           break;
+  //       }
+  //       break;
+  //   }
+  // }
+  // END classic simulation
 
 
   // trade(3, 1, 'deposit', 'longTranche', 1);
