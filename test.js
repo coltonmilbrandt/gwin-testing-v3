@@ -305,6 +305,7 @@ let tradeLog = {
     ethEnd: 0,
     usdGain: 0,
     expGain: 0,
+    gainDiff: 0,
     ethGain: 0,
   },
   2: {
@@ -318,6 +319,7 @@ let tradeLog = {
     ethEnd: 0,
     usdGain: 0,
     expGain: 0,
+    gainDiff: 0,
     ethGain: 0,
   },
   3: {
@@ -331,6 +333,7 @@ let tradeLog = {
     ethEnd: 0,
     usdGain: 0,
     expGain: 0,
+    gainDiff: 0,
     ethGain: 0,
   },
   4: {
@@ -344,6 +347,7 @@ let tradeLog = {
     ethEnd: 0,
     usdGain: 0,
     expGain: 0,
+    gainDiff: 0,
     ethGain: 0,
   },
 }
@@ -403,6 +407,7 @@ function setTrades(user, percentChangeConversion, type, tranche, amount, tradePr
       };
       console.log('Perc Check!! Should equal 1: ' + percCheck);
       transactor.expGain = expectedGain;
+      transactor.gainDiff = transactor.usdGain - transactor.expGain;
       tradeTxs.push(JSON.parse(JSON.stringify(transactor)));
       console.log(JSON.stringify(tradeTxs));
       transactor.buys = [];
