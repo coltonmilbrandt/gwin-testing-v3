@@ -293,6 +293,86 @@ function simulateUse() {
 }
  
 let currentDay = 0;
+let tradeLog = {
+  1: {
+    name: 'Alice',
+    asset: '',
+    usdSpent: 0,
+    ethSpent: 0,
+    usdEnd: 0,
+    ethEnd: 0,
+    usdGain: 0,
+    ethGain: 0,
+  },
+  2: {
+    name: 'Bob',
+    asset: '',
+    usdSpent: 0,
+    ethSpent: 0,
+    usdEnd: 0,
+    ethEnd: 0,
+    usdGain: 0,
+    ethGain: 0,
+  },
+  3: {
+    name: 'Chris',
+    asset: '',
+    usdSpent: 0,
+    ethSpent: 0,
+    usdEnd: 0,
+    ethEnd: 0,
+    usdGain: 0,
+    ethGain: 0,
+  },
+  4: {
+    name: 'Dan',
+    asset: '',
+    usdSpent: 0,
+    ethSpent: 0,
+    usdEnd: 0,
+    ethEnd: 0,
+    usdGain: 0,
+    ethGain: 0,
+  },
+}
+
+let tradeTxs = [];
+
+// receive buy - record aggregated entry price
+// receive sell - record sell price
+  // RECORD
+    // USD buy {
+      // USD buy 1
+        // amount ETH deposited
+        // ETH price
+        // USD value
+      // USD buy 2 ...
+    //}
+    // USD aggregate entry
+    // USD sell
+    // % profit
+    // ETH in
+    // ETH out
+    // % gain
+
+// setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice);
+function setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice) {
+  transactor = tradeLog[user];
+  switch (type) {
+    case 'deposit':
+      transactor.asset = tranche;
+      transactor.usdSpent += amount * tradePrice;
+      transactor.ethSpent += amount;
+      break;
+    case 'withdrawal':
+      transactor.usdEnd = amount * tradePrice;
+      transactor.ethEnd = amount;
+      transactor.usdGain = (transactor.usdEnd - transactor.usdSpent) / transactor.usdSpent;
+      transactor.ethGain = (transactor.ethEnd - transactor.ethSpent) / transactor.ethSpent;
+      tradeTxs.push(transactor);
+      break;
+  }
+}
 
 // Random Version
 function simulateRandomUse() {
@@ -323,6 +403,7 @@ function simulateRandomUse() {
     let tradePrice = ethPriceArray[day];
     let percentChangeConversion = (tradePrice - startingPrice) / startingPrice;
     transact(user, percentChangeConversion, type, tranche, amount);
+    setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice);
   };
   function withdrawAll(user, day, tranche) {
     let tradePrice = ethPriceArray[day];
@@ -364,7 +445,7 @@ function simulateRandomUse() {
     let userToTransact = randomIntFromInterval(1,4);
     // let daysSinceLastTx = randomIntFromInterval(20,40); 
     let daysSinceLastTx = 10;
-    let amountToTransact = randomIntFromInterval(1,100) / 10;
+    let amountToTransact = randomIntFromInterval(1,50) / 10;
     txDay += daysSinceLastTx;
     console.log('on day ' + txDay + ' ' + transactionType + ' of ' + amountToTransact + ' to ' + transactionTranche);
     let l = state.trancheBalances.longTranche.ethBal;
@@ -442,6 +523,7 @@ function simulateRandomUse() {
         break;
     }
   }
+  console.log(tradeTxs);
   // END common sense simulation
 
   // START classic simulation
