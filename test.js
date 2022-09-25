@@ -297,41 +297,53 @@ let tradeLog = {
   1: {
     name: 'Alice',
     asset: '',
+    buys: [],
+    tradePrices: [],
     usdSpent: 0,
     ethSpent: 0,
     usdEnd: 0,
     ethEnd: 0,
     usdGain: 0,
+    expGain: 0,
     ethGain: 0,
   },
   2: {
     name: 'Bob',
+    buys: [],
+    tradePrices: [],
     asset: '',
     usdSpent: 0,
     ethSpent: 0,
     usdEnd: 0,
     ethEnd: 0,
     usdGain: 0,
+    expGain: 0,
     ethGain: 0,
   },
   3: {
     name: 'Chris',
+    buys: [],
+    tradePrices: [],
     asset: '',
     usdSpent: 0,
     ethSpent: 0,
     usdEnd: 0,
     ethEnd: 0,
     usdGain: 0,
+    expGain: 0,
     ethGain: 0,
   },
   4: {
     name: 'Dan',
+    buys: [],
+    tradePrices: [],
     asset: '',
     usdSpent: 0,
     ethSpent: 0,
     usdEnd: 0,
     ethEnd: 0,
     usdGain: 0,
+    expGain: 0,
     ethGain: 0,
   },
 }
@@ -355,6 +367,9 @@ let tradeTxs = [];
     // ETH out
     // % gain
 
+    // expected gain
+      // change since tx * weight * trancheMult (for each transaction)
+
 // setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice);
 function setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice) {
   transactor = tradeLog[user];
@@ -362,6 +377,8 @@ function setTrades(user, percentChangeConversion, type, tranche, amount, tradePr
     case 'deposit':
       transactor.asset = tranche;
       transactor.usdSpent += amount * tradePrice;
+      transactor.buys.push(amount * tradePrice);
+      transactor.tradePrices.push(tradePrice);
       transactor.ethSpent += amount;
       break;
     case 'withdrawal':
@@ -369,7 +386,35 @@ function setTrades(user, percentChangeConversion, type, tranche, amount, tradePr
       transactor.ethEnd = amount;
       transactor.usdGain = (transactor.usdEnd - transactor.usdSpent) / transactor.usdSpent;
       transactor.ethGain = (transactor.ethEnd - transactor.ethSpent) / transactor.ethSpent;
-      tradeTxs.push(transactor);
+      
+      let mult = 1.5;
+      if (tranch == 'diminishedTranche'){
+        mult = 0.5;
+      };
+
+      let expectedGain = 0;
+      let percCheck = 0;
+
+      for (let i = 0; i < transactor.buys.length; i++) {
+        let percWeight = transactor.buys[i] / transactor.usdEnd;
+        let actualEthGain = (transactor.tradePrices[i] - tradePrice) / tradePrice;  
+        expectedGain += (actualEthGain * percWeight) * mult;
+        percCheck += percWeight;
+      };
+      console.log('Perc Check!! Should equal 1: ' + percCheck);
+      transactor.expGain.push(expectedGain);
+      tradeTxs.push(JSON.parse(JSON.stringify(transactor)));
+      console.log(tradeTxs);
+      transactor.buys = [];
+      transactor.tradePrices = [];
+      transactor.asset = '';
+      transactor.usdSpent = 0;
+      transactor.ethSpent = 0;
+      transactor.usdEnd = 0;
+      transactor.ethEnd = 0;
+      transactor.usdGain = 0;
+      transactor.expGain = 0;
+      transactor.ethGain = 0;
       break;
   }
 }
@@ -523,7 +568,6 @@ function simulateRandomUse() {
         break;
     }
   }
-  console.log(tradeTxs);
   // END common sense simulation
 
   // START classic simulation
