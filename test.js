@@ -514,7 +514,7 @@ function simulateRandomUse() {
   setValue('endingPrice', endingPrice);
   // initialAllocation()
   // initialAllocation(1,5);
-  initialAllocation(30,30);
+  initialAllocation(20,5);
   // set and record initial state
   setInitialState();
   createUsers();
@@ -573,26 +573,12 @@ function simulateRandomUse() {
     let userToTransact = randomIntFromInterval(1,4);
     // let daysSinceLastTx = randomIntFromInterval(20,40); 
     let daysSinceLastTx = 10;
-    let amountToTransact = randomIntFromInterval(1,5) / 10;
+    let amountToTransact = randomIntFromInterval(1,10) / 10;
     txDay += daysSinceLastTx;
     console.log('on day ' + txDay + ' ' + transactionType + ' of ' + amountToTransact + ' to ' + transactionTranche);
     let l = state.trancheBalances.longTranche.ethBal; // 1
     let d = state.trancheBalances.diminishedTranche.ethBal; // 2
-    let lDif = l - d;
-    let dDif = d - l;
-    let lMax = ((lDif + l) * 2) - l ;
-    let dMax = ((dDif + d) * 2) - d ;
-    let halfLMax = lMax / 2;
-    let halfDMax = dMax / 2;
-    if(l > d && transactionType == 1 && transactionTranche == 2) {
-      if(amountToTransact > lMax) {
-        amountToTransact = randomIntFromInterval(halfLMax,lMax);
-      }
-    } else if (d > l && transactionType == 1 && transactionTranche == 1) {
-      if(amountToTransact > dMax) {
-        amountToTransact = randomIntFromInterval(halfDMax,dMax);
-      }
-    }
+    
     let longRatio = l / d;
     if (longRatio < 0.8) {
       if (longRatio < 0.50) {
@@ -609,6 +595,23 @@ function simulateRandomUse() {
       transactionTranche = 2;
       transactionType = 1;
     };
+
+    let lDif = l - d;
+    let dDif = d - l;
+    let lMax = ((lDif + l) * 2) - l ;
+    let dMax = ((dDif + d) * 2) - d ;
+    let halfLMax = lMax / 2;
+    let halfDMax = dMax / 2;
+    if(l > d && transactionType == 1 && transactionTranche == 2) {
+      if(amountToTransact > lMax) {
+        amountToTransact = randomIntFromInterval(halfLMax,lMax);
+      }
+    } else if (d > l && transactionType == 1 && transactionTranche == 1) {
+      if(amountToTransact > dMax) {
+        amountToTransact = randomIntFromInterval(halfDMax,dMax);
+      }
+    }
+    
     switch (transactionType) {
       case 1: // deposit
         console.log('deposit');
