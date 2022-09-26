@@ -294,6 +294,23 @@ function simulateUse() {
  
 let currentDay = 0;
 let tradeLog = {
+  0: {
+    name: 'Protocol',
+    asset: '',
+    buys: [],
+    tradePrices: [],
+    longRatios: [],
+    avgLongRatioEntry: 0,
+    longRatioEnd: 0,
+    usdSpent: 0,
+    ethSpent: 0,
+    usdEnd: 0,
+    ethEnd: 0,
+    usdGain: 0,
+    expGain: 0,
+    gainDiff: 0,
+    ethGain: 0,
+  },
   1: {
     name: 'Alice',
     asset: '',
@@ -390,9 +407,13 @@ let tradeCol = 5;
 let tradeRow = 86;
 
 // setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice);
-function setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice) {
+function setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice, ratio) {
   transactor = tradeLog[user];
-  tradeLongRatio = state.trancheBalances.longTranche.ethBal / state.trancheBalances.diminishedTranche.ethBal;
+  if(ratio == undefined) {
+    tradeLongRatio = state.trancheBalances.longTranche.ethBal / state.trancheBalances.diminishedTranche.ethBal;
+  } else {
+    tradeLongRatio = ratio;
+  }
   switch (type) {
     case 'deposit':
       transactor.asset = tranche;
@@ -514,14 +535,14 @@ function simulateRandomUse() {
   setValue('endingPrice', endingPrice);
   // initialAllocation()
   // initialAllocation(1,5);
-  initialAllocation(20,5);
+  initialAllocation(20,20);
   // set and record initial state
   setInitialState();
   createUsers();
   let priceSheet = SpreadsheetApp.getActive().getSheetByName('ethPrice');
   let ethPriceArray = priceSheet.getRange('ethPriceArray').getValues();
   
-  function trade(user, day, type, tranche, amount) {
+  function trade(user, day, type, tranche, amount, ratio) {
     if (day < currentDay) {
       console.error('Error: day is already past. You do not have a time machine.');
       console.error('Simulation aborted.');
@@ -531,7 +552,7 @@ function simulateRandomUse() {
     let tradePrice = ethPriceArray[day];
     let percentChangeConversion = (tradePrice - startingPrice) / startingPrice;
     transact(user, percentChangeConversion, type, tranche, amount);
-    setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice);
+    setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice, ratio);
   };
   function withdrawAll(user, day, tranche) {
     let tradePrice = ethPriceArray[day];
@@ -542,7 +563,7 @@ function simulateRandomUse() {
     reallocate(percentChangeConversion);
     updateUserState();
     adjustForNewTx();
-
+    let ratio = state.trancheBalances.longTranche.ethBal / state.trancheBalances.diminishedTranche.ethBal;
     let withdrawalAmount;
     switch (tranche) {
       case 'longTranche':
@@ -552,7 +573,8 @@ function simulateRandomUse() {
         withdrawalAmount = state.userBalances[user].diminishedTranche.ethBal;
         break;
     };
-    trade(user, day, 'withdrawal', tranche, withdrawalAmount);
+    console.log('looking for this: ' + ratio);
+    trade(user, day, 'withdrawal', tranche, withdrawalAmount, ratio);
   };
   // user, day                       amount
   // trade(1, 1, 'deposit', 'longTranche', 1);
@@ -582,16 +604,20 @@ function simulateRandomUse() {
     let longRatio = l / d;
     if (longRatio < 0.8) {
       if (longRatio < 0.50) {
-        amountToTransact = (0.5 * d) - l;
+        amountToTransact = (0.7 * d) - l;
       };
-      userToTransact = randomIntFromInterval(1,2);
+      // userToTransact = randomIntFromInterval(1,2);
       transactionTranche = 1;
       transactionType = 1;
+      if (state.userBalances[0].diminishedTranche.ethBal > amountToTransact) {
+        transactionTranche = 2;
+        transactionType = 2;
+      }
     } else if (longRatio > 1.3) {
       if (longRatio > 1.5) {
         amountToTransact = (0.6667 * l) - d;
       };
-      userToTransact = randomIntFromInterval(3,4);
+      // userToTransact = randomIntFromInterval(3,4);
       transactionTranche = 2;
       transactionType = 1;
     };
@@ -611,7 +637,7 @@ function simulateRandomUse() {
         amountToTransact = randomIntFromInterval(halfDMax,dMax);
       }
     }
-    
+
     switch (transactionType) {
       case 1: // deposit
         console.log('deposit');
@@ -622,7 +648,7 @@ function simulateRandomUse() {
               withdrawAll(userToTransact, txDay, 'diminishedTranche');
               console.log('withdraw diminished');
             };
-            trade(userToTransact, txDay, 'deposit', 'longTranche', amountToTransact);
+            trade(userToTransact, txDay, 'deposit', 'longTranche', amountToTransact, undefined);
             console.log('and then deposit long');
             break;
           case 2: // diminished
@@ -631,7 +657,7 @@ function simulateRandomUse() {
               withdrawAll(userToTransact, txDay, 'longTranche');
               console.log('withdraw long');
             };
-            trade(userToTransact, txDay, 'deposit', 'diminishedTranche', amountToTransact);
+            trade(userToTransact, txDay, 'deposit', 'diminishedTranche', amountToTransact, undefined);
             console.log('and then deposit diminished');
             break;
         }
@@ -649,7 +675,7 @@ function simulateRandomUse() {
               console.log('withdraw diminished');
             } else {
               console.log('deposit diminished');
-              trade(userToTransact, txDay, 'deposit', 'diminishedTranche', amountToTransact);
+              trade(userToTransact, txDay, 'deposit', 'diminishedTranche', amountToTransact, undefined);
             }
             break;
           case 2: // diminished
@@ -661,7 +687,7 @@ function simulateRandomUse() {
               withdrawAll(userToTransact, txDay, 'longTranche');
               console.log('withdraw long');
             } else {
-              trade(userToTransact, txDay, 'deposit', 'longTranche', amountToTransact);
+              trade(userToTransact, txDay, 'deposit', 'longTranche', amountToTransact, undefined);
               console.log('deposit long');
             }
             break;
