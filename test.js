@@ -299,6 +299,9 @@ let tradeLog = {
     asset: '',
     buys: [],
     tradePrices: [],
+    longRatios: [],
+    avgLongRatioEntry: 0,
+    longRatioEnd: 0,
     usdSpent: 0,
     ethSpent: 0,
     usdEnd: 0,
@@ -312,6 +315,9 @@ let tradeLog = {
     name: 'Bob',
     buys: [],
     tradePrices: [],
+    longRatios: [],
+    avgLongRatioEntry: 0,
+    longRatioEnd: 0,
     asset: '',
     usdSpent: 0,
     ethSpent: 0,
@@ -326,6 +332,9 @@ let tradeLog = {
     name: 'Chris',
     buys: [],
     tradePrices: [],
+    longRatios: [],
+    avgLongRatioEntry: 0,
+    longRatioEnd: 0,
     asset: '',
     usdSpent: 0,
     ethSpent: 0,
@@ -340,6 +349,9 @@ let tradeLog = {
     name: 'Dan',
     buys: [],
     tradePrices: [],
+    longRatios: [],
+    avgLongRatioEntry: 0,
+    longRatioEnd: 0,
     asset: '',
     usdSpent: 0,
     ethSpent: 0,
@@ -374,18 +386,24 @@ let tradeTxs = [];
     // expected gain
       // change since tx * weight * trancheMult (for each transaction)
 
+let tradeCol = 5;
+let tradeRow = 86;
+
 // setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice);
 function setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice) {
   transactor = tradeLog[user];
+  tradeLongRatio = state.trancheBalances.longTranche.ethBal / state.trancheBalances.diminishedTranche.ethBal;
   switch (type) {
     case 'deposit':
       transactor.asset = tranche;
       transactor.usdSpent += amount * tradePrice;
       transactor.buys.push(amount * tradePrice);
+      transactor.longRatios.push(tradeLongRatio);
       transactor.tradePrices.push(tradePrice);
       transactor.ethSpent += amount;
       break;
     case 'withdrawal':
+      transactor.longRatios.push(tradeLongRatio);
       transactor.usdEnd = amount * tradePrice;
       transactor.ethEnd = amount;
       transactor.usdGain = (transactor.usdEnd - transactor.usdSpent) / transactor.usdSpent;
@@ -405,11 +423,64 @@ function setTrades(user, percentChangeConversion, type, tranche, amount, tradePr
         expectedGain += (actualEthGain * percWeight) * mult;
         percCheck += percWeight;
       };
+
+      let averageBuyLongRatio = 0;
+      let percCheckTwo = 0;
+
+      for (let i = 0; i < (transactor.longRatios.length - 1); i++) {
+        console.log('check: ');
+        console.log(transactor.buys[i]);
+        console.log(transactor.usdSpent);
+        let percWeight = transactor.buys[i] / transactor.usdSpent;
+        let portion = percWeight * transactor.longRatios[i];
+        console.log('percweight ' + percWeight);
+        console.log('long ratio ' + transactor.longRatios[i])
+        averageBuyLongRatio += portion;
+        percCheckTwo += percWeight;
+      };
+
+      transactor.avgLongRatioEntry = averageBuyLongRatio;
+      transactor.longRatioEnd = tradeLongRatio;
+
       console.log('Perc Check!! Should equal 1: ' + percCheck);
+      console.log('Perc Check TWO!! Should equal 1: ' + percCheckTwo);
       transactor.expGain = expectedGain;
       transactor.gainDiff = transactor.usdGain - transactor.expGain;
       tradeTxs.push(JSON.parse(JSON.stringify(transactor)));
       console.log(JSON.stringify(tradeTxs));
+
+      // export trades
+      let txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.name);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.asset);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.usdSpent);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.usdEnd);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.usdGain);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.expGain);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.usdGain - transactor.expGain);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.expGain / mult);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.ethSpent);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.ethEnd);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.ethGain);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.avgLongRatioEntry);
+      tradeCol++;
+      txSheet.getRange(tradeRow,tradeCol).setValue(transactor.longRatioEnd);
+      tradeCol++;
+      
+      tradeCol = 5;
+      tradeRow++;
+
       transactor.buys = [];
       transactor.tradePrices = [];
       transactor.asset = '';
@@ -420,6 +491,11 @@ function setTrades(user, percentChangeConversion, type, tranche, amount, tradePr
       transactor.usdGain = 0;
       transactor.expGain = 0;
       transactor.ethGain = 0;
+      transactor.longRatios = [];
+      transactor.avgLongRatioEntry = 0;
+      transactor.longRatioEnd = 0;
+      transactor.gainDiff = 0;
+
       break;
   }
 }
@@ -427,7 +503,9 @@ function setTrades(user, percentChangeConversion, type, tranche, amount, tradePr
 // Random Version
 function simulateRandomUse() {
   addInteractionSheet();
-
+  txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
+  txSheet.getRange('dataOne').clearContent();
+  txSheet.getRange('dataTwo').clearContent();
   // Set Starting Price
   ethPrice = 1700;
   startingPrice = ethPrice;
@@ -435,8 +513,8 @@ function simulateRandomUse() {
   setValue('startingPrice', startingPrice);
   setValue('endingPrice', endingPrice);
   // initialAllocation()
-  initialAllocation(1,5);
-  // initialAllocation(30,30);
+  // initialAllocation(1,5);
+  initialAllocation(30,30);
   // set and record initial state
   setInitialState();
   createUsers();
@@ -495,11 +573,26 @@ function simulateRandomUse() {
     let userToTransact = randomIntFromInterval(1,4);
     // let daysSinceLastTx = randomIntFromInterval(20,40); 
     let daysSinceLastTx = 10;
-    let amountToTransact = randomIntFromInterval(1,50) / 10;
+    let amountToTransact = randomIntFromInterval(1,5) / 10;
     txDay += daysSinceLastTx;
     console.log('on day ' + txDay + ' ' + transactionType + ' of ' + amountToTransact + ' to ' + transactionTranche);
-    let l = state.trancheBalances.longTranche.ethBal;
-    let d = state.trancheBalances.diminishedTranche.ethBal;
+    let l = state.trancheBalances.longTranche.ethBal; // 1
+    let d = state.trancheBalances.diminishedTranche.ethBal; // 2
+    let lDif = l - d;
+    let dDif = d - l;
+    let lMax = ((lDif + l) * 2) - l ;
+    let dMax = ((dDif + d) * 2) - d ;
+    let halfLMax = lMax / 2;
+    let halfDMax = dMax / 2;
+    if(l > d && transactionType == 1 && transactionTranche == 2) {
+      if(amountToTransact > lMax) {
+        amountToTransact = randomIntFromInterval(halfLMax,lMax);
+      }
+    } else if (d > l && transactionType == 1 && transactionTranche == 1) {
+      if(amountToTransact > dMax) {
+        amountToTransact = randomIntFromInterval(halfDMax,dMax);
+      }
+    }
     let longRatio = l / d;
     if (longRatio < 0.8) {
       if (longRatio < 0.50) {
