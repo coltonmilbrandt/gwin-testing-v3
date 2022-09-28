@@ -294,23 +294,6 @@ function simulateUse() {
  
 let currentDay = 0;
 let tradeLog = {
-  0: {
-    name: 'Protocol',
-    asset: '',
-    buys: [],
-    tradePrices: [],
-    longRatios: [],
-    avgLongRatioEntry: 0,
-    longRatioEnd: 0,
-    usdSpent: 0,
-    ethSpent: 0,
-    usdEnd: 0,
-    ethEnd: 0,
-    usdGain: 0,
-    expGain: 0,
-    gainDiff: 0,
-    ethGain: 0,
-  },
   1: {
     name: 'Alice',
     asset: '',
@@ -604,15 +587,11 @@ function simulateRandomUse() {
     let longRatio = l / d;
     if (longRatio < 0.8) {
       if (longRatio < 0.50) {
-        amountToTransact = (0.7 * d) - l;
+        amountToTransact = (0.5 * d) - l;
       };
       // userToTransact = randomIntFromInterval(1,2);
       transactionTranche = 1;
       transactionType = 1;
-      if (state.userBalances[0].diminishedTranche.ethBal > amountToTransact) {
-        transactionTranche = 2;
-        transactionType = 2;
-      }
     } else if (longRatio > 1.3) {
       if (longRatio > 1.5) {
         amountToTransact = (0.6667 * l) - d;
