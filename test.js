@@ -250,6 +250,7 @@ function recordUserState() {
   // percent owned only changes when allocations change
 };
 
+// update the users percent ownership of the tranche (after price change or deposit)
 function updateUserState() {
   getCurrentValues();
   for (let i = 0; i < state.userBalances.length; i++) {
@@ -826,6 +827,7 @@ function transact(user, ethPercentChange, type, tranche, amount) {
         return;
       };
     };
+    // update the users percent ownership of the tranche after price change
     updateUserState();
     let preTxState = JSON.parse(JSON.stringify(state));
     // add user, if non-existent
@@ -888,7 +890,7 @@ function transact(user, ethPercentChange, type, tranche, amount) {
     console.log('user: ' + user + ', ' + users[user] + 's new balance follows:')
     console.log('long: ' + state.userBalances[user].longTranche.ethBal);
     console.log('diminished: ' + state.userBalances[user].diminishedTranche.ethBal);
-    // update user percent owned and usd balance
+    // update user percent owned and usd balance AFTER the deposit or withdrawal
     updateUserState();
     recordUserState();
     recordProtocolState();
