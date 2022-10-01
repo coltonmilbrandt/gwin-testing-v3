@@ -390,7 +390,7 @@ let tradeTxs = [];
 let tradeCol = 5;
 let tradeRow = 86;
 
-// setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice);
+// records a trade when it is made to the output sheet 'interactions'
 function setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice, ratio) {
   transactor = tradeLog[user];
   if(ratio == undefined) {
@@ -887,7 +887,7 @@ function transact(user, ethPercentChange, type, tranche, amount) {
         };
         break;
     }
-    console.log('user: ' + user + ', ' + users[user] + 's new balance follows:')
+    console.log('user: ' + user + ', ' + users[user] + ' new balance follows:')
     console.log('long: ' + state.userBalances[user].longTranche.ethBal);
     console.log('diminished: ' + state.userBalances[user].diminishedTranche.ethBal);
     // update user percent owned and usd balance AFTER the deposit or withdrawal
@@ -922,8 +922,10 @@ function transact(user, ethPercentChange, type, tranche, amount) {
   };
 };
 
+// transaction output begins on row 2
 let txRow = 2;
 
+// exports the data for a single transaction
 function exportData(tx) {
   let txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
   txSheet.getRange(txRow,1).setValue(ethPrice);
@@ -964,6 +966,7 @@ function exportData(tx) {
   txRow++;
 }
 
+// function to add the data output sheet if it doesn't exist
 function addInteractionSheet() {
   // Create new sheet if it doesn't exist already
   let txSheet;
@@ -975,6 +978,7 @@ function addInteractionSheet() {
   return txSheet;
 };
 
+// converts percent price change to an ending price
 function changePriceBy(percentChange) {
   ethPrice = ethPrice * (1 + percentChange);
   sheet.getRange('endingPrice').setValue(ethPrice);
