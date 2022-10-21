@@ -295,6 +295,23 @@ function simulateUse() {
  
 let currentDay = 0;
 let tradeLog = {
+  0: {
+    name: 'Protocol',
+    asset: '',
+    buys: [],
+    tradePrices: [],
+    longRatios: [],
+    avgLongRatioEntry: 0,
+    longRatioEnd: 0,
+    usdSpent: 0,
+    ethSpent: 0,
+    usdEnd: 0,
+    ethEnd: 0,
+    usdGain: 0,
+    expGain: 0,
+    gainDiff: 0,
+    ethGain: 0,
+  },
   1: {
     name: 'Alice',
     asset: '',
@@ -677,6 +694,8 @@ function simulateRandomUse() {
   }
   // END common sense simulation
 
+  
+
   // START classic simulation
   // for (let i = 0; i < 50; i++) {
   //   let transactionType = randomIntFromInterval(1,2);
@@ -757,6 +776,102 @@ function simulateRandomUse() {
   // console.log(JSON.stringify(state));
 }
 
+// Random Version
+function simulateSelected() {
+  addInteractionSheet();
+  txSheet = SpreadsheetApp.getActive().getSheetByName('Interaction');
+  txSheet.getRange('dataOne').clearContent();
+  txSheet.getRange('dataTwo').clearContent();
+  // Set Starting Price
+  ethPrice = 1000;
+  startingPrice = ethPrice;
+  endingPrice = ethPrice;
+  setValue('startingPrice', startingPrice);
+  setValue('endingPrice', endingPrice);
+  // initialAllocation()
+  // initialAllocation(1,5);
+  initialAllocation(10,10);
+  // set and record initial state
+  setInitialState();
+  createUsers();
+  let priceSheet = SpreadsheetApp.getActive().getSheetByName('ethPrice');
+  let ethPriceArray = priceSheet.getRange('ethPriceArray').getValues();
+  
+  function trade(user, _price, type, tranche, amount, ratio) {
+    let tradePrice = _price;
+    let percentChangeConversion = (tradePrice - startingPrice) / startingPrice;
+    transact(user, percentChangeConversion, type, tranche, amount);
+    setTrades(user, percentChangeConversion, type, tranche, amount, tradePrice, ratio);
+  };
+  function withdrawAll(user, _price, tranche) {
+    let tradePrice = _price;
+    let percentChangeConversion = (tradePrice - startingPrice) / startingPrice;
+
+    getCurrentValues();
+    changePriceBy(percentChangeConversion);
+    reallocate(percentChangeConversion);
+    updateUserState();
+    adjustForNewTx();
+    let ratio = state.trancheBalances.longTranche.ethBal / state.trancheBalances.diminishedTranche.ethBal;
+    let withdrawalAmount;
+    switch (tranche) {
+      case 'longTranche':
+        withdrawalAmount = state.userBalances[user].longTranche.ethBal;
+        break;
+      case 'diminishedTranche':
+        withdrawalAmount = state.userBalances[user].diminishedTranche.ethBal;
+        break;
+    };
+    console.log('looking for this: ' + ratio);
+    trade(user, tradePrice, 'withdrawal', tranche, withdrawalAmount, ratio);
+  };
+
+  // deposit to cooled tranche
+  trade(1, 1200, 'deposit', 'diminishedTranche', 1, undefined); // #tx1
+  // deposit to heated tranche
+  trade(2, 1400, 'deposit', 'longTranche', 1, undefined); // #tx2
+  // withdraw all from cooled tranche
+  withdrawAll(1, 1300, 'diminishedTranche'); // #tx3
+  // End original integration test (part 1)
+  
+  // // Begin test_liquidation unit test
+  trade(0, 300, 'withdrawal', 'diminishedTranche', 1, undefined);
+  // // End unit test
+  
+  // // Begin test_unbalanced_hot_cold_ratio unit test
+  // trade(0, 1000, 'withdrawal', 'diminishedTranche', 8, undefined);
+  // trade(1, 1100, 'deposit', 'diminishedTranche', 1, undefined);
+  // withdrawAll(1, 800, 'diminishedTranche');
+  // // End unit test
+
+  // Integration Test Continued (part 2)
+  // // arrange...
+  // trade(3, 1150, 'deposit', 'longTranche', 2, undefined); // #tx4
+  // // deposit to both tranches
+  // trade(1, 1100, 'deposit', 'diminishedTranche', 3, undefined); // #tx5
+  // trade(1, 1100, 'deposit', 'longTranche', 1, undefined); // #tx5
+  // // withdraw all from heated tranche
+  // withdrawAll(2, 1000, 'longTranche'); // #tx6
+  // // withdraw all from both tranches
+  // withdrawAll(1, 1300, 'diminishedTranche'); // #tx7
+  // withdrawAll(1, 1300, 'longTranche'); // #tx7
+  // // arrange... 2nd dual deposit test
+  // trade(4, 1400, 'deposit', 'diminishedTranche', 3, undefined); // #tx8
+  // trade(4, 1400, 'deposit', 'longTranche', 1, undefined); // #tx8
+  // // withdraw portion from both tranches
+  // trade(4, 1300, 'withdrawal', 'diminishedTranche', 0.5, undefined); // #tx9
+  // trade(4, 1300, 'withdrawal', 'longTranche', 0.5, undefined); // #tx9
+  // // withdraw portion from long tranche
+  // trade(3, 1500, 'withdrawal', 'longTranche', 0.7, undefined); // #tx10
+  // // withdraw portion from diminished tranche
+  // trade(4, 1300, 'withdrawal', 'diminishedTranche', 0.1, undefined); // #tx11
+
+
+
+  // trade(userToTransact, txDay, 'deposit', 'longTranche', 1, undefined);
+  
+}
+
 function randomIntFromInterval(min, max) { // min and max included 
   return Math.floor(Math.random() * (max - min + 1) + min)
 }
@@ -780,7 +895,7 @@ function reallocate(priceChange) {
 }
 
 function createUsers() {
-  for (var i = 1; i <= 4; i++) {
+  for (var i = 0; i <= 4; i++) {
     let newUser = {
       user: i,
       longTranche: {
