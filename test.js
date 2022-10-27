@@ -835,7 +835,8 @@ function simulateSelected() {
   // End original integration test (part 1)
   
   // // Begin test_liquidation unit test
-  trade(0, 300, 'withdrawal', 'diminishedTranche', 1, undefined);
+  // trade(0, 300, 'withdrawal', 'diminishedTranche', 1, undefined);
+  trade(0, 1500, 'deposit', 'longTranche', .00000000000000001, undefined); // #tx1
   // // End unit test
   
   // // Begin test_unbalanced_hot_cold_ratio unit test
